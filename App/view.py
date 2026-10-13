@@ -1,4 +1,9 @@
 import sys
+import App.logic as logic
+from DataStructures.List import array_list as al
+from DataStructures.Map import map_linear_probing as lp
+from DataStructures.Map import map_entry as me
+
 
 
 def new_logic():
@@ -6,7 +11,12 @@ def new_logic():
         Se crea una instancia del controlador
     """
     #TODO: Llamar la función de la lógica donde se crean las estructuras de datos
-    pass
+    return logic.new_logic()
+
+def imprimir_pedido(pedido):                                  
+    print(pedido["Order_ID"], pedido["Product"], pedido["Country"],
+          pedido["Channel"], pedido["Order_Date"], pedido["Boxes_Shipped"],
+          pedido["Price_per_Box"], pedido["Amount"])
 
 def print_menu():
     print("Bienvenido")
@@ -24,7 +34,10 @@ def load_data(control):
     Carga los datos
     """
     #TODO: Realizar la carga de datos
-    pass
+    archivo = input("Nombre del archivo: ")
+    ruta = "Data/" + archivo
+    resultado = logic.load_data(control, ruta)
+    return resultado
 
 
 def print_data(control, id):
@@ -97,6 +110,31 @@ def main():
         if int(inputs) == 0:
             print("Cargando información de los archivos ....\n")
             data = load_data(control)
+            print("Tiempo de carga: ", data["tiempo"], "ms")
+            print("Total de pedidos: ", data["total"])
+            print("Fecha más antigua: ", data["fecha_min"])
+            print("Fecha más reciente: ", data["fecha_max"])
+            print("Pedido con Amount mínimo:")
+            imprimir_pedido(data["pedido_min"])
+            print("Pedido con Amount máximo:")
+            imprimir_pedido(data["pedido_max"])
+            print("Primeros 5 pedidos:")
+            for i in range(al.size(data["primeros_5"])):
+                imprimir_pedido(al.get_element(data["primeros_5"], i))
+            print("Ultimos 5 pedidos:")
+            for i in range(al.size(data["ultimos_5"])):
+                imprimir_pedido(al.get_element(data["ultimos_5"], i))
+            mapa = control["pedidos_por_canal"]
+            canales = lp.key_set(mapa)
+            print("Pedidos por canal: ")
+            for i in range(al.size(canales)):
+                canal = al.get_element(canales, i)
+                numero = lp.get(mapa,canal)
+                print("En el canal", canal, "hay", numero)
+                
+
+
+            
         elif int(inputs) == 1:
             print_req_1(control)
 
@@ -112,7 +150,7 @@ def main():
         elif int(inputs) == 5:
             print_req_5(control)
 
-        elif int(inputs) == 5:
+        elif int(inputs) == 6:
             print_req_6(control)
 
         elif int(inputs) == 7:
