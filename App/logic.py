@@ -13,7 +13,8 @@ def new_logic():
     catalog = {
     "pedidos": al.new_list(),
     "pedidos_por_canal": lp.new_map(3, 0.5),
-    "pedidos_por_fecha": lp.new_map(730, 0.5)
+    "pedidos_por_fecha": lp.new_map(730, 0.5),
+    "promedio_producto_pais": lp.new_map(60, 0.5)
     }
     return catalog
 
@@ -37,6 +38,15 @@ def criterio_req_3(pedido_1, pedido_2):
             return pedido_1["Order_ID"] < pedido_2["Order_ID"]
     return False
 
+def criterio_req_4(pedido_1, pedido_2):
+    if pedido_1["Amount"] > pedido_2["Amount"]:
+        return True
+    if pedido_1["Amount"] == pedido_2["Amount"]:
+        if pedido_1["Marketing_Spend"] < pedido_2["Marketing_Spend"]:
+            return True
+        if pedido_1["Marketing_Spend"] == pedido_2["Marketing_Spend"]:
+            return pedido_1["Order_ID"] < pedido_2["Order_ID"]
+    return False
 
 def load_data(catalog, filename):
     """
@@ -96,6 +106,19 @@ def load_data(catalog, filename):
             lista = al.new_list()
             al.add_last(lista, pedido)
             lp.put(mapa_fecha, fecha, lista)
+        
+        producto = pedido["Product"]
+        pais = pedido["Country"]
+        llave = (producto, pais)
+        mapa_producto_pais = catalog["promedio_producto_pais"]
+        if lp.contains(mapa_producto_pais, llave):
+            lista = lp.get(mapa_producto_pais, llave)
+            al.add_last(lista, pedido)
+        else:
+            lista= al.new_list()
+            al.add_last(lista, pedido)
+            lp.put(mapa_producto_pais, llave, lista)
+        
     
     archivo.close()
     total = al.size(catalog["pedidos"])
@@ -192,13 +215,61 @@ def req_3(catalog, fecha_pedido, amount_min, amount_max):
     
 
 
-def req_4(catalog):
+def req_4(catalog, producto, pais):
     """
     Retorna el resultado del requerimiento 4
     """
     # TODO: Modificar el requerimiento 4
-    pass
+    tiempo_inicial = get_time()
+    llave = (producto, pais)
+    mapa_producto_pais = catalog["promedio_producto_pais"]
+    pedidos_llave = lp.get(mapa_producto_pais, llave)
+    suma_precio = 0
+    suma_descuento = 0
+    suma_marketing = 0
+    suma_cajas = 0
+    lista2 = al.new_list()
+    n = 0
+    if pedidos_llave != None:
+        n = al.size(pedidos_llave)
+        for i in range(al.size(pedidos_llave)):
+            pedido = al.get_element(pedidos_llave, i)
+            suma_precio += pedido["Price_per_Box"]
+            suma_cajas += pedido["Boxes_Shipped"]
+            suma_descuento += pedido["Discount_Pct"]
+            suma_marketing += pedido["Marketing_Spend"]
+        al.merge_sort(pedidos_llave, criterio_req_4)
+        if al.size(pedidos_llave) >= 2:
+            lista2 = al.sub_list(pedidos_llave, 0, 2)
+        else:
+            lista2 = pedidos_llave
+    
+    if n > 0:
+    
+        promedio_precio = suma_precio/n
+        promedio_descuento = suma_descuento/n
+        promedio_marketing = suma_marketing/n
+        promedio_cajas = suma_cajas/n
+    
+    else:
+        promedio_precio = suma_precio
+        promedio_descuento = suma_descuento
+        promedio_marketing = suma_marketing
+        promedio_cajas = suma_cajas
+    
+    tiempo_final = get_time()
+    diferencia_tiempo = delta_time(tiempo_inicial, tiempo_final)
 
+    
+    return {
+        "tiempo":          diferencia_tiempo,
+        "total_pedidos":   n,
+        "promedio_precio": promedio_precio,
+        "promedio_marketing": promedio_marketing,
+        "promedio_descuento": promedio_descuento,
+        "promedio_cajas": promedio_cajas,
+        "lista2": lista2
+    }
 
 def req_5(catalog):
     """
