@@ -136,12 +136,28 @@ def print_req_5(control):
     
 
 
+def imprimir_pais_req_6(registro):
+    print(registro["pais"], registro["pedidos"], registro["recaudo"], registro["marketing"], registro["cajas"], registro["promedio_precio"], registro["eficiencia"])
+
+
 def print_req_6(control):
     """
         Función que imprime la solución del Requerimiento 6 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    n = int(input("¿Cuantos países desea? "))
+    producto = input("Escriba un producto: ")
+    fecha_inicial = input("Digite una fecha inicial (YYYY-MM-DD): ")
+    fecha_final = input("Digite una fecha final (YYYY-MM-DD): ")
+    resultado = logic.req_6(control, n, producto, fecha_inicial, fecha_final)
+    print("Tiempo de ejecución: ", resultado["tiempo"], "ms")
+    print("Total de pedidos: ", resultado["total_pedidos"])
+    print("Total de países diferentes: ", resultado["total_paises"])
+    print("Amount total: ", resultado["total_recaudo"])
+    print("Marketing_Spend total: ", resultado["total_marketing"])
+    print("Países:")
+    for i in range(al.size(resultado["top_n"])):
+        imprimir_pais_req_6(al.get_element(resultado["top_n"], i))
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
