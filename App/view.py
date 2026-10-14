@@ -110,13 +110,30 @@ def print_req_4(control):
     for i in range(al.size(resultado["lista2"])):
         imprimir_pedido_req_4(al.get_element(resultado["lista2"], i))
 
+def imprimir_pedido_req_5(pedido):
+    print(pedido["Product"], pedido["pedidos"], pedido["cajas"], pedido["recaudo"], pedido["promedio_precio"], pedido["promedio_descuento"], pedido["marketing"])
+
 
 def print_req_5(control):
     """
         Función que imprime la solución del Requerimiento 5 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    n = int(input("¿Cuantos productos desea? "))
+    pais = input("Escibra un país: ")
+    fecha_inicial = input("Digite una fecha inicial")
+    fecha_final = input("Digite una fecha final")
+    resultado = logic.req_5(control, n, pais, fecha_inicial, fecha_final)
+    print("Tiempo de ejecución: ", resultado["tiempo"], "ms")
+    print("Total de pedidos: ", resultado["total_pedidos"])
+    print("Total de productos diferentes: ", resultado["total_productos"])
+    print("Recaudo total de pedidos filtrados: ", resultado["total_recaudo"])
+    print("Pedidos:")
+    for i in range(al.size(resultado["top_n"])):
+        imprimir_pedido_req_5(al.get_element(resultado["top_n"], i))
+
+
+    
 
 
 def print_req_6(control):

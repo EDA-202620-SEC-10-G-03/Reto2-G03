@@ -14,7 +14,8 @@ def new_logic():
     "pedidos": al.new_list(),
     "pedidos_por_canal": lp.new_map(3, 0.5),
     "pedidos_por_fecha": lp.new_map(730, 0.5),
-    "promedio_producto_pais": lp.new_map(60, 0.5)
+    "promedio_producto_pais": lp.new_map(60, 0.5),
+    "pedidos_por_pais": lp.new_map(5,0.5)
     }
     return catalog
 
@@ -47,6 +48,18 @@ def criterio_req_4(pedido_1, pedido_2):
         if pedido_1["Marketing_Spend"] == pedido_2["Marketing_Spend"]:
             return pedido_1["Order_ID"] < pedido_2["Order_ID"]
     return False
+
+def criterio_req_5(registro_1, registro_2):
+    if registro_1["recaudo"] > registro_2["recaudo"]:
+        return True
+    if registro_1["recaudo"] == registro_2["recaudo"]:
+        if registro_1["cajas"] > registro_2["cajas"]:
+            return True
+        if registro_1["cajas"] == registro_2["cajas"]:
+            return registro_1["Product"] < registro_2["Product"]
+    return False
+
+
 
 def load_data(catalog, filename):
     """
@@ -118,6 +131,16 @@ def load_data(catalog, filename):
             lista= al.new_list()
             al.add_last(lista, pedido)
             lp.put(mapa_producto_pais, llave, lista)
+        
+        mapa_pedidos_pais = catalog["pedidos_por_pais"]
+        if lp.contains(mapa_pedidos_pais, pais):
+            lista = lp.get(mapa_pedidos_pais, pais)
+            al.add_last(lista, pedido)
+        
+        else:
+            lista = al.new_list()
+            al.add_last(lista, pedido)
+            lp.put(mapa_pedidos_pais, pais, lista)
         
     
     archivo.close()
@@ -271,12 +294,78 @@ def req_4(catalog, producto, pais):
         "lista2": lista2
     }
 
-def req_5(catalog):
+
+
+
+def req_5(catalog, n_productos, pais, fecha_inicial, fecha_final):
+    
     """
     Retorna el resultado del requerimiento 5
     """
     # TODO: Modificar el requerimiento 5
-    pass
+    tiempo_inicial = get_time()
+    
+    mapa_pedidos_pais = catalog["pedidos_por_pais"]
+    pedidos_pais = lp.get(mapa_pedidos_pais, pais)
+    total_pedidos = 0
+    total_recaudo = 0
+    tabla_productos = lp.new_map(12,0.5)
+    top_n = al.new_list()
+    
+    if pedidos_pais != None:
+        for i in range(al.size(pedidos_pais)):
+            pedido = al.get_element(pedidos_pais, i)
+            if pedido["Order_Date"] >= fecha_inicial and pedido["Order_Date"] <= fecha_final:
+                total_pedidos += 1
+                total_recaudo += pedido["Amount"]
+                producto = pedido["Product"]
+                if lp.contains(tabla_productos, producto):
+                    registro = lp.get(tabla_productos, producto)
+                    registro["pedidos"] += 1
+                    registro["cajas"] += pedido["Boxes_Shipped"]
+                    registro["recaudo"] += pedido["Amount"]
+                    registro["suma_precio"] += pedido["Price_per_Box"]
+                    registro["suma_descuento"] += pedido["Discount_Pct"]
+                    registro["marketing"] += pedido["Marketing_Spend"]
+                
+                else:
+                    registro = {
+                        "Product": producto,
+                        "pedidos": 1,
+                        "cajas": pedido["Boxes_Shipped"],
+                        "recaudo": pedido["Amount"],
+                        "suma_precio": pedido["Price_per_Box"],
+                        "suma_descuento": pedido["Discount_Pct"],
+                        "marketing": pedido["Marketing_Spend"]
+                    }
+                    lp.put(tabla_productos, producto, registro)
+    
+    lista_productos = lp.value_set(tabla_productos)
+                    
+    al.merge_sort(lista_productos, criterio_req_5)
+    
+    if al.size(lista_productos) >= n_productos:
+        top_n = al.sub_list(lista_productos, 0, n_productos)
+    else:
+        top_n = lista_productos
+        
+    for i in range(al.size(top_n)):
+        registro = al.get_element(top_n, i)
+        registro["promedio_precio"] = registro["suma_precio"] / registro["pedidos"]
+        registro["promedio_descuento"] = registro["suma_descuento"] / registro["pedidos"]
+            
+    tiempo_final = get_time()
+    diferencia_tiempo = delta_time(tiempo_inicial, tiempo_final)
+
+    return {
+        "tiempo":            diferencia_tiempo,
+        "total_pedidos":     total_pedidos,
+        "total_productos":   al.size(lista_productos),
+        "total_recaudo":     total_recaudo,
+        "top_n":             top_n,
+    }
+    
+
 
 def req_6(catalog):
     """
