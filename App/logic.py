@@ -12,7 +12,8 @@ def new_logic():
     #TODO: Llama a las funciónes de creación de las estructuras de datos
     catalog = {
     "pedidos": al.new_list(),
-    "pedidos_por_canal": lp.new_map(3,0.5) 
+    "pedidos_por_canal": lp.new_map(3, 0.5),
+    "pedidos_por_fecha": lp.new_map(730, 0.5)
     }
     return catalog
 
@@ -24,6 +25,16 @@ def criterio_amount_desc(pedido_1, pedido_2):
         return True
     if pedido_1["Amount"] == pedido_2["Amount"]:
         return pedido_1["Order_ID"] < pedido_2["Order_ID"]
+    return False
+
+def criterio_req_3(pedido_1, pedido_2):
+    if pedido_1["Amount"] > pedido_2["Amount"]:
+        return True
+    if pedido_1["Amount"] == pedido_2["Amount"]:
+        if pedido_1["Aporte_Comercial"] > pedido_2["Aporte_Comercial"]:
+            return True
+        if pedido_1["Aporte_Comercial"] == pedido_2["Aporte_Comercial"]:
+            return pedido_1["Order_ID"] < pedido_2["Order_ID"]
     return False
 
 
@@ -75,6 +86,16 @@ def load_data(catalog, filename):
             pedido_min = pedido
         if pedido_max is None or pedido["Amount"] > pedido_max["Amount"]:
             pedido_max = pedido
+        
+        fecha = pedido["Order_Date"]
+        mapa_fecha = catalog["pedidos_por_fecha"]
+        if lp.contains(mapa_fecha, fecha):
+            lista = lp.get(mapa_fecha, fecha)
+            al.add_last(lista, pedido)
+        else:
+            lista = al.new_list()
+            al.add_last(lista, pedido)
+            lp.put(mapa_fecha, fecha, lista)
     
     archivo.close()
     total = al.size(catalog["pedidos"])
@@ -119,12 +140,56 @@ def req_2(catalog):
     pass
 
 
-def req_3(catalog):
+def req_3(catalog, fecha_pedido, amount_min, amount_max):
     """
     Retorna el resultado del requerimiento 3
     """
     # TODO: Modificar el requerimiento 3
-    pass
+    tiempo_inicial = get_time()
+    mapa_fecha = catalog["pedidos_por_fecha"]
+    pedidos_fecha = lp.get(mapa_fecha, fecha_pedido)
+    lista_filtrada = al.new_list()
+    total_amount = 0
+    total_marketing = 0
+    total_aporte = 0
+    
+    if pedidos_fecha != None:
+        for i in range(al.size(pedidos_fecha)):
+            pedido = al.get_element(pedidos_fecha,i)
+            if pedido["Amount"] >= amount_min and pedido["Amount"] <= amount_max:
+                al.add_last(lista_filtrada, pedido)
+                total_amount += pedido["Amount"]
+                total_marketing += pedido["Marketing_Spend"]
+                aporte = pedido["Amount"] - pedido["Marketing_Spend"]
+                pedido["Aporte_Comercial"] = aporte
+                total_aporte += aporte
+                
+        al.merge_sort(lista_filtrada, criterio_req_3)
+    if al.size(lista_filtrada) > 20:
+        primeros = al.sub_list(lista_filtrada, 0, 10)
+        ultimos = al.sub_list(lista_filtrada, al.size(lista_filtrada)-10, 10)
+    else:
+        primeros = lista_filtrada
+        ultimos = al.new_list()
+
+    tiempo_final = get_time()
+    diferencia_tiempo = delta_time(tiempo_inicial, tiempo_final)
+    
+    return {
+        "tiempo":          diferencia_tiempo,
+        "total_pedidos":   al.size(lista_filtrada),
+        "total_amount":    total_amount,
+        "total_marketing": total_marketing,
+        "total_aporte":    total_aporte,
+        "primeros":        primeros,
+        "ultimos":         ultimos,
+    }
+
+        
+    
+        
+    
+    
 
 
 def req_4(catalog):

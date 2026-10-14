@@ -62,13 +62,32 @@ def print_req_2(control):
     # TODO: Imprimir el resultado del requerimiento 2
     pass
 
+def imprimir_pedido_req_3(pedido):
+    print(pedido["Order_ID"], pedido["Product"], pedido["Country"], pedido["Order_Date"],
+          pedido["Marketing_Spend"], pedido["Boxes_Shipped"], pedido["Amount"], pedido["Aporte_Comercial"])
+
 
 def print_req_3(control):
     """
         Función que imprime la solución del Requerimiento 3 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    fecha = input("Ingrese una fecha: ")
+    valor_max = float(input("Ingrese valor max: "))
+    valor_min = float(input("Ingrese valor min: "))
+    resultado = logic.req_3(control, fecha, valor_min, valor_max)
+    print("Tiempo de ejecución: ", resultado["tiempo"], "ms")
+    print("Total de pedidos: ", resultado["total_pedidos"])
+    print("Monto total recaudado: ", resultado["total_amount"])
+    print("Total inversión en mercadeo: ", resultado["total_marketing"])
+    print("Aporte comercial total: ", resultado["total_aporte"])
+    print("Pedidos:")
+    for i in range(al.size(resultado["primeros"])):
+        imprimir_pedido_req_3(al.get_element(resultado["primeros"], i))
+    if al.size(resultado["ultimos"]) > 0:
+        for i in range(al.size(resultado["ultimos"])):
+            imprimir_pedido_req_3(al.get_element(resultado["ultimos"], i))
+    
 
 
 def print_req_4(control):
